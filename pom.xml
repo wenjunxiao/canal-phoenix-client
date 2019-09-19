@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <profiles>
+        <profile>
+            <id>build-with-env</id>
+            <activation>
+                <property>
+                    <name>env.PHOENIX_VERSION</name>
+                </property>
+            </activation>
+            <properties>
+                <version.phoenix>${env.PHOENIX_VERSION}</version.phoenix>
+            </properties>
+        </profile>
+        <profile>
+            <id>build-without-env</id>
+            <activation>
+                <property>
+                    <name>!env.PHOENIX_VERSION</name>
+                </property>
+            </activation>
+            <properties>
+                <version.phoenix>4.14.0-HBase-1.2</version.phoenix>
+            </properties>
+        </profile>
+    </profiles>
+
+    <groupId>canal.phoenix</groupId>
+    <artifactId>canal-phoenix-client</artifactId>
+    <version>${version.phoenix}</version>
+
+    <name>Canal Phoenix Client</name>
+    <description>Canal Phoenix Client</description>
+    <packaging>jar</packaging>
+
+
+    <properties>
+        <!-- Don't make a test-jar -->
+        <maven.test.skip>true</maven.test.skip>
+        <!-- Don't make a source-jar -->
+        <source.skip>true</source.skip>
+        <license.bundles.dependencies>true</license.bundles.dependencies>
+        <top.dir>${project.basedir}</top.dir>
+        <shaded.package>canal.phoenix.shaded</shaded.package>
+    </properties>
+    <repositories>
+        <repository>
+            <id>project</id>
+            <name>Project Central Repo</name>
+            <url>file://${project.basedir}/repo</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </snapshots>
+        </repository>
+    </repositories>
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.phoenix</groupId>
+            <artifactId>phoenix-client</artifactId>
+            <version>${version.phoenix}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <finalName>canal-phoenix-${version.phoenix}-client</finalName>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.4.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>canal-phoenix-${version.phoenix}-client</finalName>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+                            <shadeTestJar>false</shadeTestJar>
+                            <artifactSet>
+                                <includes>
+                                    <include>*:*</include>
+                                </includes>
+                                <excludes>
+                                    <exclude>xom:xom</exclude>
+                                </excludes>
+                            </artifactSet>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>META-INF/license/*</exclude>
+                                        <exclude>LICENSE.*</exclude>
+                                        <exclude>NOTICE.*</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.google</pattern>
+                                    <shadedPattern>${shaded.package}.com.google</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
